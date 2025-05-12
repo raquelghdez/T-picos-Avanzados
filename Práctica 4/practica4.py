@@ -12,8 +12,10 @@ import tkinter as tk
 
 # Para cambiar el color del texto
 from tkinter import colorchooser 
+
 # Devuelve una cadena y esa cadena es la ruta del archivo donde se encuentra nuestro archivo
 from tkinter import filedialog   
+
 # (Themed Tkinter widgets) Para agregar botones, etiquetas u otros elementos   
 from tkinter import ttk             
 
