@@ -7,6 +7,7 @@ from pdf2image import convert_from_path  # Importar pdf2image para convertir PDF
 import os
 from tkinter import filedialog
 import sys
+import subprocess
 
 # ------------------------- CONEXIÓN A BASE DE DATOS -------------------------
 def conectar_bd():
@@ -77,7 +78,7 @@ class LoginWindow(tk.Toplevel):
 
         # 🔹 Definir manualmente los parámetros de la imagen de fondo
         self.bg_params = {"ruta": "C:/ITE/4° SEMESTRE/FUNDAMENTOS DE BASES DE DATOS/IMAGENES/LOGO portada.jpg",
-                          "size": (1087, 610), "x": 0, "y": 0}  # 🔹 Ajusta tamaño y posición
+                          "size": (1090, 612), "x": 0, "y": 0}  # 🔹 Ajusta tamaño y posición
 
         # Cargar imagen con parámetros manuales
         self.bg_image = self.cargar_imagen(self.bg_params["ruta"], self.bg_params["size"])
@@ -88,27 +89,27 @@ class LoginWindow(tk.Toplevel):
 
         self.intentos = 0  # Contador de intentos fallidos
 
+        # 🔹 Definir ubicación manual de los cuadros de entrada en la derecha
+        self.form_params = {"x": 50, "y": 50, "width": 350, "height": 250}
+
         # Contenedor con el color de fondo correcto
-        frame_login = tk.Frame(self, bg="#78BDB8", bd=5)
-        frame_login.place(relx=0.5, rely=0.5, anchor="center")  # 🔹 Posiciona en el centro
+        frame_login = tk.Frame(self, bg="#78BDB8", bd=5, width=self.form_params["width"], height=self.form_params["height"])
+        frame_login.place(x=self.form_params["x"], y=self.form_params["y"])  # 🔹 Posiciona a la derecha
 
-        tk.Label(frame_login, text="Usuario:", font=("Helvetica", 14), bg='#78BDB8', fg="white").pack(pady=5)
+        tk.Label(frame_login, text="Usuario:", font=("Helvetica", 14), bg='#78BDB8', fg="white").place(x=20, y=20)
         self.entry_username = tk.Entry(frame_login, width=30, font=("Helvetica", 12))
-        self.entry_username.pack(pady=5)
+        self.entry_username.place(x=20, y=50)
 
-        tk.Label(frame_login, text="Contraseña:", font=("Helvetica", 14), bg='#78BDB8', fg="white").pack(pady=5)
+        tk.Label(frame_login, text="Contraseña:", font=("Helvetica", 14), bg='#78BDB8', fg="white").place(x=20, y=90)
         self.entry_password = tk.Entry(frame_login, width=30, show="*", font=("Helvetica", 12))
-        self.entry_password.pack(pady=5)
+        self.entry_password.place(x=20, y=120)
 
-        # Botones "Ingresar" y "Salir del sistema"
-        button_frame = tk.Frame(frame_login, bg="#78BDB8")
-        button_frame.pack(pady=10)
+        # 🔹 Botones "Ingresar" y "Salir del sistema"
+        tk.Button(frame_login, text="Ingresar", font=("Helvetica", 12), bg="#007bff", fg="white",
+                  command=self.validar_usuario, width=10).place(x=20, y=170)
 
-        tk.Button(button_frame, text="Ingresar", font=("Helvetica", 12), bg="#007bff", fg="white",
-                  command=self.validar_usuario, width=10).pack(side="left", padx=5)
-
-        tk.Button(button_frame, text="Salir del sistema", font=("Helvetica", 12), bg="#007bff", fg="white",
-                  command=self.salir_sistema, width=15).pack(side="right", padx=5)
+        tk.Button(frame_login, text="Salir del sistema", font=("Helvetica", 12), bg="#007bff", fg="white",
+                  command=self.salir_sistema, width=15).place(x=148, y=170)
 
     def cargar_imagen(self, ruta, size):
         """Carga y redimensiona una imagen."""
@@ -176,11 +177,6 @@ class Aplication(tk.Tk):
         self.initialize_gui()
         self.registrar_entrada()  # Registrar la entrada al sistema al iniciar sesión
 
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        self.initialize_gui()
-        self.registrar_entrada()  # Registrar la entrada al sistema al iniciar sesión 
-
     def registrar_entrada(self):
         """Registrar la entrada del usuario en la base de datos."""
         conn = conectar_bd()
@@ -222,7 +218,32 @@ class Aplication(tk.Tk):
         conn.commit()
         print(f"Sesión cerrada correctamente para usuario {self.id_usuario_actual}.")
         conn.close()
-        sys.exit()
+
+        ventana_temporal = tk.Toplevel()
+        ventana_temporal.title("Saliendo del Sistema...")
+        
+        ventana_temporal.geometry("500x300")
+        ventana_temporal.configure(bg="black")  # Fondo negro
+
+
+        try:
+            ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"  # Cambia a la ruta correcta
+            imagen = Image.open(ruta_imagen)
+            imagen = imagen.resize((500, 300))
+            img_tk = ImageTk.PhotoImage(imagen)
+
+            # Mostrar imagen
+            label_imagen = tk.Label(ventana_temporal, image=img_tk)
+            label_imagen.image = img_tk  # Mantener referencia
+            label_imagen.pack()
+        except Exception as e:
+            print(f"Error al cargar la imagen: {e}")
+
+        # Cerrar la ventana de imagen después de 3 segundos y salir del sistema
+        ventana_temporal.after(3000, lambda: ventana_temporal.destroy())  # Cierra la ventana
+        ventana_temporal.after(3200, lambda: os._exit(0)) 
+
+        # sys.exit()
 
 
     def cargar_imagen(self, ruta, size=None):
@@ -409,6 +430,7 @@ class Aplication(tk.Tk):
                         messagebox.showerror("Error", "El documento encontrado no es un archivo PDF.")
                 else:
                     messagebox.showerror("Error", "No se encontró un documento con los datos ingresados.")
+                    consulta_window.deiconify()  # Reactiva la ventana si está oculta
 
         tk.Button(consulta_window, text="Abrir Documento", font=("Helvetica", 12), bg="#007bff", fg="white", 
                 command=buscar_documento).pack(pady=10)
@@ -513,7 +535,7 @@ class Aplication(tk.Tk):
 
     def alta_usuario(self):
         if self.rol_actual != "Directora":
-            messagebox.showerror("Acceso Denegado", "Solo la directora puede dar de alta usuarios")
+            messagebox.showerror("Acceso Denegado", "Solo la Directora puede dar de alta usuarios")
             return
 
         # Crear la ventana centrada
@@ -556,13 +578,32 @@ class Aplication(tk.Tk):
         entry_user_password.pack(pady=5)
 
         def guardar():
+            nombre = entry_nombre.get().strip()
+            rol = entry_rol.get().strip()
+            email = entry_email.get().strip()
+            username = entry_username.get().strip()
+            password = entry_user_password.get().strip()
+
+            # Validación de campos vacíos
+            if not nombre or not rol or not email or not username or not password:
+                messagebox.showerror("Error", "Todos los campos son obligatorios.")
+                return
+
             conexion = conectar_bd()
             if conexion:
                 try:
                     cursor = conexion.cursor()
+
+                    # Verificar si el usuario ya existe
+                    cursor.execute("SELECT COUNT(*) FROM usuario WHERE email = %s OR username = %s", (email, username))
+                    if cursor.fetchone()[0] > 0:
+                        messagebox.showerror("Error", "El email o username ya están registrados.")
+                        return
+
+                    # Insertar usuario si no está duplicado
                     cursor.execute(
-                        "INSERT INTO usuarios (nombre, contraseña, rol, email, username, password) VALUES (%s, %s, %s, %s, %s, %s)",
-                        (entry_nombre.get(), entry_password.get(), entry_rol.get(), entry_email.get(), entry_username.get(), entry_user_password.get())
+                        "INSERT INTO usuario (nombre, rol, email, username, password) VALUES (%s, %s, %s, %s, %s)",
+                        (nombre, rol, email, username, password)
                     )
                     conexion.commit()
                     messagebox.showinfo("Éxito", "Usuario registrado correctamente")
