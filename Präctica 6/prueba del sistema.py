@@ -150,10 +150,39 @@ class LoginWindow(tk.Toplevel):
                 sys.exit()
 
     def salir_sistema(self):
-        """Cerrar completamente el sistema."""
-        self.master.quit()
-        self.master.destroy()
-        sys.exit()
+        """Mostrar imagen de cierre en pantalla completa antes de cerrar el sistema."""
+
+        # Crear ventana en pantalla completa
+        ventana_temporal = tk.Toplevel(self.master)
+        ventana_temporal.title("Cerrando el sistema...")
+        
+        ventana_temporal.attributes("-fullscreen", True)  # Activa pantalla completa
+        ventana_temporal.configure(bg="black")
+
+        try:
+            ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"
+            imagen = Image.open(ruta_imagen)
+
+            # Obtener tamaño de pantalla y ajustar imagen
+            ancho_pantalla = ventana_temporal.winfo_screenwidth()
+            alto_pantalla = ventana_temporal.winfo_screenheight()
+            imagen = imagen.resize((ancho_pantalla, alto_pantalla))
+            img_tk = ImageTk.PhotoImage(imagen)
+
+            label_imagen = tk.Label(ventana_temporal, image=img_tk)
+            label_imagen.image = img_tk  # Mantener referencia
+            label_imagen.pack(fill="both", expand=True)  # Ajustar imagen al tamaño de la ventana
+        except Exception as e:
+            print(f"Error al cargar la imagen: {e}")
+
+        # Cerrar la ventana de imagen después de 3 segundos y cerrar el sistema completamente
+        def cerrar_completamente():
+            ventana_temporal.destroy()  # Cierra la ventana de imagen
+            self.master.quit()  # Cierra la ventana principal de Tkinter
+            self.master.destroy()  # Elimina todas las ventanas
+            os._exit(0)  # Cierra el programa completamente
+
+        ventana_temporal.after(2000, cerrar_completamente)  # Ejecuta la función después de 3 segundos
 
 # ------------------------- CLASE PRINCIPAL -------------------------
 class Aplication(tk.Tk):
@@ -204,47 +233,64 @@ class Aplication(tk.Tk):
         conn.close()
         print(f"✅ Sesión iniciada correctamente para usuario {self.id_usuario_actual}.")
 
-    def salir_sistema(self):
+    def registrar_salida(self):
+        """Actualizar la fecha de salida del usuario en la tabla salir_sistema."""
         conn = conectar_bd()
-        cursor = conn.cursor()
-
-        if self.id_usuario_actual is None:
-            print("Error: No hay usuario autenticado.")
+        if conn is None:
+            print("Error: No se pudo conectar a la base de datos para registrar la salida.")
             return
 
-        # Actualizar el registro más reciente con la fecha de salida
-        cursor.execute("UPDATE salir_sistema SET fecha_salida = NOW() WHERE id_usuario = %s AND fecha_salida IS NULL", (self.id_usuario_actual,))
-
-        conn.commit()
-        print(f"Sesión cerrada correctamente para usuario {self.id_usuario_actual}.")
-        conn.close()
-
+        cursor = conn.cursor()
+        try:
+            # Actualiza el último registro sin fecha de salida
+            cursor.execute("""
+                UPDATE salir_sistema 
+                SET fecha_salida = NOW() 
+                WHERE id_usuario = %s AND fecha_salida IS NULL 
+                ORDER BY fecha_entrada DESC 
+                LIMIT 1
+            """, (self.id_usuario_actual,))
+            conn.commit()
+            print(f"✅ Salida registrada correctamente para usuario {self.id_usuario_actual}.")
+        except Exception as e:
+            print(f"❌ Error al registrar salida: {e}")
+        finally:
+            cursor.close()
+            conn.close()
+# ----------------------- OPCIÓN: Salir del Sistema ---------------------------------------
+    def salir_sistema(self):
+        # Crear ventana temporal para mostrar la imagen de cierre
         ventana_temporal = tk.Toplevel()
-        ventana_temporal.title("Saliendo del Sistema...")
-        
-        ventana_temporal.geometry("500x300")
-        ventana_temporal.configure(bg="black")  # Fondo negro
-
+        ventana_temporal.title("Cerrando Sesión...")
+        ventana_temporal.attributes("-fullscreen", True)  # Activar pantalla completa
+        ventana_temporal.configure(bg="black")
 
         try:
-            ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"  # Cambia a la ruta correcta
+            ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"
             imagen = Image.open(ruta_imagen)
-            imagen = imagen.resize((500, 300))
+            
+            ancho_pantalla = ventana_temporal.winfo_screenwidth()
+            alto_pantalla = ventana_temporal.winfo_screenheight()
+            imagen = imagen.resize((ancho_pantalla, alto_pantalla))
             img_tk = ImageTk.PhotoImage(imagen)
 
-            # Mostrar imagen
             label_imagen = tk.Label(ventana_temporal, image=img_tk)
             label_imagen.image = img_tk  # Mantener referencia
-            label_imagen.pack()
+            label_imagen.pack(fill="both", expand=True)
         except Exception as e:
             print(f"Error al cargar la imagen: {e}")
 
-        # Cerrar la ventana de imagen después de 3 segundos y salir del sistema
-        ventana_temporal.after(3000, lambda: ventana_temporal.destroy())  # Cierra la ventana
-        ventana_temporal.after(3200, lambda: os._exit(0)) 
+        # Cerrar la ventana de imagen después de 3 segundos y cerrar el sistema completamente
+        def cerrar_sistema():
+            ventana_temporal.destroy()  # Cierra la ventana de imagen
+            self.registrar_salida()  # <--- Registra la salida antes de cerrar
+            self.quit()                 # Cierra la ventana principal de Tkinter
+            self.destroy()              # Elimina todas las ventanas activas
+            os._exit(0)                 # Cierra el programa completamente
 
-        # sys.exit()
+        ventana_temporal.after(2000, cerrar_sistema)  # Ejecuta la función después de 3 segundos
 
+# ------------------------------------------------------------------------------------------------
 
     def cargar_imagen(self, ruta, size=None):
         """Función para cargar y redimensionar imágenes."""
@@ -337,7 +383,7 @@ class Aplication(tk.Tk):
         consulta_window.attributes('-fullscreen', True)
         consulta_window.title("Consulta de Documentos")
         consulta_window.configure(bg='#a0c4d3')
-
+        
         # Marco para definir el tamaño del recuadro
         titulo_frame = tk.Frame(consulta_window, bg='#008080', relief="solid", borderwidth=2, width=341, height=40)
         titulo_frame.place(x=0, y=152)
@@ -393,11 +439,20 @@ class Aplication(tk.Tk):
 
 # ------------------ CONSULTAR DOCUMENTO -------------------------------------------
     def consultar_documentos(self, tipo):
-        # Crear una nueva ventana dentro de la interfaz
+        # Crear ventana de consulta
         consulta_window = tk.Toplevel(self)
         consulta_window.title(f"Consultar Documento - {tipo}")
-        consulta_window.geometry("400x250")
+
+        # Definir tamaño y posición centrada en pantalla
+        ancho_ventana = 400
+        alto_ventana = 250
+        x_pos = (consulta_window.winfo_screenwidth() - ancho_ventana) // 2
+        y_pos = (consulta_window.winfo_screenheight() - alto_ventana) // 2
+
+        consulta_window.geometry(f"{ancho_ventana}x{alto_ventana}+{x_pos}+{y_pos}")
         consulta_window.configure(bg='#a0c4d3')
+        consulta_window.resizable(False, False)
+        consulta_window.grab_set()
 
         tk.Label(consulta_window, text="Ingrese Grupo:", font=("Helvetica", 12), bg='#a0c4d3').pack(pady=5)
         grupo_entry = tk.Entry(consulta_window)
@@ -408,8 +463,13 @@ class Aplication(tk.Tk):
         ciclo_entry.pack(pady=5)
 
         def buscar_documento():
-            grupo = grupo_entry.get()
-            ciclo = ciclo_entry.get()
+            grupo = grupo_entry.get().strip()
+            ciclo = ciclo_entry.get().strip()
+
+            if not grupo or not ciclo:
+                messagebox.showerror("Error", "Debe ingresar el grupo y el ciclo escolar.", parent=consulta_window)
+                consulta_window.focus_set()
+                return
 
             conexion = conectar_bd()
             if conexion:
@@ -421,22 +481,22 @@ class Aplication(tk.Tk):
 
                 if resultado:
                     ruta_archivo = resultado[0]
-                    if ruta_archivo.endswith(".pdf"):  # Asegurar que el archivo sea un PDF
+                    if ruta_archivo.endswith(".pdf"):
                         try:
-                            os.startfile(ruta_archivo)  # Abre el archivo PDF con el visor predeterminado
+                            os.startfile(ruta_archivo)  
+                            consulta_window.focus_set()  # Mantener la ventana activa para nuevas consultas
                         except Exception as e:
-                            messagebox.showerror("Error", f"No se pudo abrir el archivo: {str(e)}")
+                            messagebox.showerror("Error", f"No se pudo abrir el archivo: {str(e)}", parent=consulta_window)
                     else:
-                        messagebox.showerror("Error", "El documento encontrado no es un archivo PDF.")
+                        messagebox.showerror("Error", "El documento encontrado no es un archivo PDF.", parent=consulta_window)
                 else:
-                    messagebox.showerror("Error", "No se encontró un documento con los datos ingresados.")
-                    consulta_window.deiconify()  # Reactiva la ventana si está oculta
+                    messagebox.showerror("Error", "No se encontró un documento con los datos ingresados.", parent=consulta_window)
 
-        tk.Button(consulta_window, text="Abrir Documento", font=("Helvetica", 12), bg="#007bff", fg="white", 
+        tk.Button(consulta_window, text="Abrir Documento", font=("Helvetica", 12), bg="#007bff", fg="white",
                 command=buscar_documento).pack(pady=10)
 
         tk.Button(consulta_window, text="Regresar al Menú de Consultas", font=("Helvetica", 12), bg="#008080", fg="white",
-                command=consulta_window.destroy).pack(pady=10)  
+                command=consulta_window.destroy).pack(pady=10)
                  
 # --------------------------- ALTA DE DOCUMENTO --------------------------------------
     def alta_documento(self):
@@ -448,8 +508,8 @@ class Aplication(tk.Tk):
         alto_pantalla = alta_window.winfo_screenheight()
 
         # Calcular posición centrada
-        x_pos = (ancho_pantalla - 800) // 2  # Ajusta al ancho de la ventana
-        y_pos = (alto_pantalla - 480) // 2  # Ajusta al alto de la ventana
+        x_pos = (ancho_pantalla - 800) // 2  
+        y_pos = (alto_pantalla - 480) // 2 
 
         # Establecer la posición fija en pantalla
         alta_window.geometry(f"800x480+{x_pos}+{y_pos}") 
@@ -478,7 +538,7 @@ class Aplication(tk.Tk):
             if ruta:
                 ruta_entry.delete(0, tk.END)
                 ruta_entry.insert(0, ruta)
-                messagebox.showinfo("Archivo Seleccionado", "El archivo se ha seleccionado correctamente.\nCompleta el resto de los datos antes de registrar.")
+                messagebox.showinfo("Archivo Seleccionado", "El archivo se ha seleccionado correctamente.\nCompleta el resto de los datos antes de registrar.", parent=alta_window)
                 alta_window.focus_force()  
 
         tk.Button(alta_window, text="Buscar Archivo", font=("Helvetica", 12), bg="#007bff", fg="white",
@@ -497,7 +557,7 @@ class Aplication(tk.Tk):
             ruta_archivo = ruta_entry.get().strip()
 
             if not all([id_documento, tipo, grupo, ciclo_escolar, ruta_archivo]):
-                messagebox.showerror("Error", "Todos los campos son obligatorios.")
+                messagebox.showerror("Error", "Todos los campos son obligatorios.", parent=alta_window)
                 return
 
             conexion = conectar_bd()
@@ -510,17 +570,17 @@ class Aplication(tk.Tk):
                     """, (id_documento, tipo, grupo, ciclo_escolar, ruta_archivo))
 
                     conexion.commit()  
-                    messagebox.showinfo("Éxito", "Documento registrado exitosamente.")
+                    messagebox.showinfo("Éxito", "Documento registrado exitosamente.", parent=alta_window)
                     alta_window.destroy()  
 
                 except mysql.connector.Error as e:
-                    messagebox.showerror("Error de Base de Datos", f"No se pudo registrar el documento: {str(e)}")
+                    messagebox.showerror("Error de Base de Datos", f"No se pudo registrar el documento: {str(e)}", parent=alta_window)
 
                 finally:
                     cursor.close()
                     conexion.close()
             else:
-                messagebox.showerror("Error", "No se pudo establecer conexión con la base de datos.")
+                messagebox.showerror("Error", "No se pudo establecer conexión con la base de datos.", parent=alta_window)
 
         # Botón para registrar documento con el mismo tamaño que las entradas
         tk.Button(alta_window, text="Registrar Documento", font=("Helvetica", 12), bg="#007bff", fg="white", 
@@ -532,29 +592,16 @@ class Aplication(tk.Tk):
         
 
 # --------------------------- ALTA DE USUARIO --------------------------------------
-
     def alta_usuario(self):
-        if self.rol_actual != "Directora":
-            messagebox.showerror("Acceso Denegado", "Solo la Directora puede dar de alta usuarios")
+        if self.rol_actual.strip().lower() != "directora":
+            messagebox.showerror("Acceso Denegado", "Solo la Directora puede dar de alta usuarios.", parent=self)
             return
 
-        # Crear la ventana centrada
         ventana = tk.Toplevel(self)
         ventana.title("Alta de Usuario")
-
-        # Obtener tamaño de pantalla
-        ancho_pantalla = ventana.winfo_screenwidth()
-        alto_pantalla = ventana.winfo_screenheight()
-
-        # Calcular posición centrada
-        x_pos = (ancho_pantalla - 800) // 2
-        y_pos = (alto_pantalla - 480) // 2
-
-        # Establecer el tamaño fijo en pantalla
-        ventana.geometry(f"600x480+{x_pos}+{y_pos}")
+        ventana.geometry("600x480")
         ventana.configure(bg='#a0c4d3')
 
-        # Establecer el ancho estándar para los campos de entrada
         entry_width = 40
 
         tk.Label(ventana, text="Nombre completo del Usuario:", font=("Helvetica", 12), bg='#a0c4d3').pack(pady=5)
@@ -573,20 +620,19 @@ class Aplication(tk.Tk):
         entry_username = tk.Entry(ventana, width=entry_width)
         entry_username.pack(pady=5)
 
-        tk.Label(ventana, text="Contraseña:", font=("Helvetica", 12), bg='#a0c4d3').pack(pady=5)
+        tk.Label(ventana, text="Contraseña (Mínimo 8 caracteres):", font=("Helvetica", 12), bg='#a0c4d3').pack(pady=5)
         entry_user_password = tk.Entry(ventana, width=entry_width, show="*")
         entry_user_password.pack(pady=5)
 
-        def guardar():
+        def guardar(ventana=ventana):
             nombre = entry_nombre.get().strip()
             rol = entry_rol.get().strip()
             email = entry_email.get().strip()
             username = entry_username.get().strip()
             password = entry_user_password.get().strip()
 
-            # Validación de campos vacíos
             if not nombre or not rol or not email or not username or not password:
-                messagebox.showerror("Error", "Todos los campos son obligatorios.")
+                messagebox.showerror("Error", "Todos los campos son obligatorios.", parent=ventana)
                 return
 
             conexion = conectar_bd()
@@ -594,36 +640,31 @@ class Aplication(tk.Tk):
                 try:
                     cursor = conexion.cursor()
 
-                    # Verificar si el usuario ya existe
                     cursor.execute("SELECT COUNT(*) FROM usuario WHERE email = %s OR username = %s", (email, username))
                     if cursor.fetchone()[0] > 0:
-                        messagebox.showerror("Error", "El email o username ya están registrados.")
+                        messagebox.showerror("Error", "El email o username ya están registrados.", parent=ventana)
                         return
 
-                    # Insertar usuario si no está duplicado
                     cursor.execute(
                         "INSERT INTO usuario (nombre, rol, email, username, password) VALUES (%s, %s, %s, %s, %s)",
                         (nombre, rol, email, username, password)
                     )
                     conexion.commit()
-                    messagebox.showinfo("Éxito", "Usuario registrado correctamente")
+                    messagebox.showinfo("Éxito", "Usuario registrado correctamente", parent=ventana)
                     ventana.destroy()
                 except mysql.connector.Error as e:
-                    messagebox.showerror("Error de Base de Datos", f"No se pudo registrar el usuario: {str(e)}")
+                    messagebox.showerror("Error de Base de Datos", f"No se pudo registrar el usuario: {str(e)}", parent=ventana)
                 finally:
                     cursor.close()
                     conexion.close()
             else:
-                messagebox.showerror("Error", "No se pudo conectar a la base de datos.")
+                messagebox.showerror("Error", "No se pudo conectar a la base de datos.", parent=ventana)
 
-        # Botón para registrar usuario
         tk.Button(ventana, text="Registrar Usuario", font=("Helvetica", 12), bg="#007bff", fg="white",
                 width=26, command=guardar).pack(pady=10)
 
-        # Botón "Regresar al Menú General"
         tk.Button(ventana, text="Regresar al Menú General", font=("Helvetica", 12), bg="#008080", fg="white",
                 width=26, command=ventana.destroy).pack(pady=10)
-
 
 # ------------------------- EJECUCIÓN PRINCIPAL -------------------------
 def main():
