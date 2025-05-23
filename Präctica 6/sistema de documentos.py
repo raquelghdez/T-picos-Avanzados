@@ -31,10 +31,10 @@ class PantallaBienvenida(tk.Toplevel):
         self.configure(bg='#78BDB8')  
 
         # Definir manualmente parámetros de imágenes
-        self.logo_params = {"ruta": "C:/ITE/4° SEMESTRE/FUNDAMENTOS DE BASES DE DATOS/IMAGENES/LOGO portada.jpg", 
+        self.logo_params = {"ruta": "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/LOGO portada.jpg", 
                             "size": (340, 280), "x": 90, "y": 60}  # Ajusta tamaño y posición
-        self.lema_params = {"ruta": "C:/ITE/4° SEMESTRE/FUNDAMENTOS DE BASES DE DATOS/IMAGENES/LEMA.jpg",
-                            "size": (310, 200), "x":570, "y": 360}  # Ajusta tamaño y posición
+        self.lema_params = {"ruta": "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/LEMA 2.jpg",
+                            "size": (310, 200), "x": 570, "y": 360}  # Ajusta tamaño y posición
 
         # Cargar imágenes con parámetros manuales
         self.logo = self.cargar_imagen(self.logo_params["ruta"], self.logo_params["size"])
@@ -51,7 +51,56 @@ class PantallaBienvenida(tk.Toplevel):
 
         # Botón para continuar al login
         tk.Button(self, text="Ingresar al sistema", font=("Helvetica", 16), bg="#008080", fg="white",
-                  command=self.cerrar_pantalla).place(x=155, y=450)  # 🔹 Ajustar posición manualmente
+                  command=self.cerrar_pantalla).place(x=155, y=400)  # 🔹 Ajustar posición manualmente
+
+        # 🔹 Botón "Acerca de" justo después del botón de login
+        tk.Button(self, text="Acerca de", font=("Helvetica", 12), bg="#120168", fg="white",
+                  command=self.mostrar_acerca_de).place(x=207, y=460)  # ✅ Ubicado debajo del botón "Ingresar al sistema"
+
+    def mostrar_acerca_de(self, ancho=920, alto=373, x_pos=65, y_pos=40):
+        """Muestra una ventana emergente con información sobre el sistema con tamaño y posición ajustables."""
+        acerca_de_window = tk.Toplevel(self)
+        acerca_de_window.title("Acerca de")
+
+        # Ajusta el tamaño y la posición con parámetros personalizados
+        acerca_de_window.geometry(f"{ancho}x{alto}+{x_pos}+{y_pos}")  
+        acerca_de_window.configure(bg='#D9EAF3')
+        acerca_de_window.resizable(True, True)  
+
+        # Título y descripción del sistema (sin cambios)
+        tk.Label(acerca_de_window, text="Digital System RGH\nCumpliendo tus sueños digitales", 
+                font=("Helvetica", 14), bg='#D9EAF3').place(x=50, y=20)
+        tk.Label(acerca_de_window, text="Versión 1.0", font=("Helvetica", 12), bg='#D9EAF3').place(x=170, y=70)
+        tk.Label(acerca_de_window, text="Desarrollado con Python y MariaDB", font=("Helvetica", 12), bg='#D9EAF3').place(x=90, y=90)
+
+        # Nuevo texto justificado con tu contenido exacto
+        texto_descripcion = ("Digital System RGH ha sido diseñado para optimizar la gestión de documentos en el Departamento de "
+                            "Servicios Escolares de una universidad privada. Utilizando una base de datos centralizada y "
+                            "una interfaz gráfica intuitiva, este sistema mejora la organización, facilita el acceso remoto y garantiza "
+                            "la seguridad y conservación de la documentación administrativa. Con ello, se incrementa la eficiencia en la gestión "
+                            "de trámites y se reduce el riesgo de pérdida o deterioro de archivos físicos.")
+
+        tk.Label(acerca_de_window, text=texto_descripcion, font=("Helvetica", 12), bg='#D9EAF3', justify="center", wraplength=400).place(x=30, y=130)
+
+        # Cargar y mostrar la imagen de la autora
+        try:
+            from PIL import Image, ImageTk
+            imagen = Image.open("C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Autora.jpg")
+            imagen = imagen.resize((120, 120), Image.Resampling.LANCZOS)  # Ajustar tamaño de imagen
+            foto = ImageTk.PhotoImage(imagen)
+            tk.Label(acerca_de_window, image=foto, bg='#D9EAF3').place(x=620, y=50)  # Ubicación de la imagen
+            acerca_de_window.image = foto  # Evitar eliminación por el recolector de basura
+
+            # Texto debajo de la imagen
+            tk.Label(acerca_de_window, text="Creadora:\nRaquel Garibaldo Hernández\nEstudiante de Ing. en Sistemas Computacionales",
+                    font=("Helvetica", 12), bg='#D9EAF3', justify="center").place(x=510, y=200)
+        except Exception as e:
+            tk.Label(acerca_de_window, text=f"Error al cargar la imagen: {str(e)}", font=("Helvetica", 12), bg='#D9EAF3', fg="red").place(x=50, y=200)
+
+        # Botón para cerrar la ventana (sin cambios)
+        tk.Button(acerca_de_window, text="Cerrar", font=("Helvetica", 12), bg="#007bff", fg="white",
+                command=acerca_de_window.destroy).place(x=430, y=320)
+
 
     def cargar_imagen(self, ruta, size):
         """Función para cargar y redimensionar imágenes."""
@@ -77,7 +126,7 @@ class LoginWindow(tk.Toplevel):
         self.configure(bg='#78BDB8')  # 🔹 Fondo igual a la imagen
 
         # 🔹 Definir manualmente los parámetros de la imagen de fondo
-        self.bg_params = {"ruta": "C:/ITE/4° SEMESTRE/FUNDAMENTOS DE BASES DE DATOS/IMAGENES/LOGO portada.jpg",
+        self.bg_params = {"ruta": "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/LOGO portada.jpg",
                           "size": (1090, 612), "x": 0, "y": 0}  # 🔹 Ajusta tamaño y posición
 
         # Cargar imagen con parámetros manuales
@@ -159,7 +208,7 @@ class LoginWindow(tk.Toplevel):
         ventana_temporal.attributes("-fullscreen", True)  # Activa pantalla completa
         ventana_temporal.configure(bg="black")
 
-        try:
+        try:           
             ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"
             imagen = Image.open(ruta_imagen)
 
@@ -265,7 +314,7 @@ class Aplication(tk.Tk):
         ventana_temporal.attributes("-fullscreen", True)  # Activar pantalla completa
         ventana_temporal.configure(bg="black")
 
-        try:
+        try:           
             ruta_imagen = "C:/Users/RGbus/OneDrive/Documents/GitHub/T-picos-Avanzados/IMAGENES DEL PROYECTO/Cerrando sesión.jpg"
             imagen = Image.open(ruta_imagen)
             
