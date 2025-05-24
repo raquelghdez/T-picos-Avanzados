@@ -55,8 +55,8 @@ class PantallaBienvenida(tk.Toplevel):
 
         # 🔹 Botón "Acerca de" justo después del botón de login
         tk.Button(self, text="Acerca de", font=("Helvetica", 12), bg="#120168", fg="white",
-                  command=self.mostrar_acerca_de).place(x=207, y=460)  # ✅ Ubicado debajo del botón "Ingresar al sistema"
-
+                  command=self.mostrar_acerca_de).place(x=207, y=460)  
+        
     def mostrar_acerca_de(self, ancho=920, alto=373, x_pos=65, y_pos=40):
         """Muestra una ventana emergente con información sobre el sistema con tamaño y posición ajustables."""
         acerca_de_window = tk.Toplevel(self)
@@ -97,7 +97,7 @@ class PantallaBienvenida(tk.Toplevel):
         except Exception as e:
             tk.Label(acerca_de_window, text=f"Error al cargar la imagen: {str(e)}", font=("Helvetica", 12), bg='#D9EAF3', fg="red").place(x=50, y=200)
 
-        # Botón para cerrar la ventana (sin cambios)
+        # Botón para cerrar la ventana
         tk.Button(acerca_de_window, text="Cerrar", font=("Helvetica", 12), bg="#007bff", fg="white",
                 command=acerca_de_window.destroy).place(x=430, y=320)
 
@@ -329,7 +329,7 @@ class Aplication(tk.Tk):
         except Exception as e:
             print(f"Error al cargar la imagen: {e}")
 
-        # Cerrar la ventana de imagen después de 3 segundos y cerrar el sistema completamente
+        # Cerrar la ventana de imagen después de 2 segundos y cerrar el sistema completamente
         def cerrar_sistema():
             ventana_temporal.destroy()  # Cierra la ventana de imagen
             self.registrar_salida()  # <--- Registra la salida antes de cerrar
